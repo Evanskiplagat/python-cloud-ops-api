@@ -19,8 +19,14 @@ class DeploymentService:
         self.db.commit()
         return entity
 
-    def list(self, pagination: PaginationParams, environment: str | None, service: str | None):
-        statement = self.repository.list(environment=environment, service=service)
+    def list(
+        self,
+        pagination: PaginationParams,
+        environment: str | None,
+        service: str | None,
+        status_filter: str | None,
+    ):
+        statement = self.repository.list(environment=environment, service=service, status=status_filter)
         items, total = self.repository.paginate(statement, pagination.offset, pagination.page_size)
         return PaginatedResponse[DeploymentResponse](
             items=[DeploymentResponse.model_validate(item) for item in items],

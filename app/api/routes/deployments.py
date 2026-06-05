@@ -27,10 +27,13 @@ def list_deployments(
     page_size: int = Query(default=20, ge=1, le=100),
     environment: str | None = None,
     service: str | None = None,
+    status_filter: str | None = Query(default=None, alias="status"),
     db: Session = Depends(get_db),
     _: User = Depends(require_roles(Role.ADMIN, Role.DEVOPS_ENGINEER, Role.DEVELOPER, Role.VIEWER)),
 ):
-    return DeploymentService(db).list(PaginationParams(page=page, page_size=page_size), environment, service)
+    return DeploymentService(db).list(
+        PaginationParams(page=page, page_size=page_size), environment, service, status_filter
+    )
 
 
 @router.get("/{deployment_id}", response_model=DeploymentResponse)
