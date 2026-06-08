@@ -30,16 +30,16 @@ CloudOps Center is a production-shaped cloud operations platform built with Fast
 
 ```text
 cloudops-center/
-├── alembic/
-├── app/
-├── docs/
-├── monitoring/
-├── tests/
-├── .github/workflows/
-├── Dockerfile
-├── docker-compose.yml
-├── requirements.txt
-└── .env.example
+|-- alembic/
+|-- app/
+|-- docs/
+|-- monitoring/
+|-- tests/
+|-- .github/workflows/
+|-- Dockerfile
+|-- docker-compose.yml
+|-- requirements.txt
+`-- .env.example
 ```
 
 ## Local Setup
@@ -86,5 +86,5 @@ Services:
 ## Testing
 
 ```bash
-pytest -q
+python -m pytest -q
 ```
