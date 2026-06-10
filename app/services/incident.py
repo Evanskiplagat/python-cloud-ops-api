@@ -6,16 +6,19 @@ from sqlalchemy.orm import Session
 from app.core.errors import AppException
 from app.core.pagination import PaginatedResponse, PaginationParams
 from app.models.incident import Incident, IncidentEvent, IncidentStatus
+from app.models.user import User
 from app.repositories.incident import IncidentRepository
 from app.schemas.incident import IncidentCreate, IncidentResponse, IncidentUpdate
+from app.services.audit import AuditService, snapshot_model
 
 
 class IncidentService:
     def __init__(self, db: Session) -> None:
         self.db = db
         self.repository = IncidentRepository(db)
+        self.audit = AuditService(db)
 
-    def create(self, payload: IncidentCreate) -> Incident:
+    def create(self, payload: IncidentCreate, actor: User) -> Incident:
         entity = Incident(
             title=payload.title,
             description=payload.description,
@@ -26,6 +29,7 @@ class IncidentService:
         if payload.status == IncidentStatus.RESOLVED:
             entity.resolved_at = datetime.now(UTC)
         self.repository.add(entity)
+        self.audit.record("incident.create", "incident", actor, entity_id=entity.id, after_state=snapshot_model(entity))
         self.db.commit()
         self.db.refresh(entity)
         return entity
@@ -46,27 +50,47 @@ class IncidentService:
             raise AppException("Incident not found", status.HTTP_404_NOT_FOUND)
         return entity
 
-    def update(self, incident_id: int, payload: IncidentUpdate) -> Incident:
+    def update(self, incident_id: int, payload: IncidentUpdate, actor: User) -> Incident:
         entity = self.get(incident_id)
+        before_state = snapshot_model(entity)
         updates = payload.model_dump(exclude_unset=True)
         if updates.get("status") == IncidentStatus.RESOLVED and entity.resolved_at is None:
             updates["resolved_at"] = updates.get("resolved_at") or datetime.now(UTC)
         for field, value in updates.items():
             setattr(entity, field, value)
         self.db.add(entity)
+        self.db.flush()
+        self.audit.record(
+            "incident.update",
+            "incident",
+            actor,
+            entity_id=entity.id,
+            before_state=before_state,
+            after_state=snapshot_model(entity),
+        )
         self.db.commit()
         self.db.refresh(entity)
         return entity
 
-    def add_event(self, incident_id: int, message: str, occurred_at: datetime) -> Incident:
+    def add_event(self, incident_id: int, message: str, occurred_at: datetime, actor: User) -> Incident:
         entity = self.get(incident_id)
         entity.timeline.append(IncidentEvent(message=message, occurred_at=occurred_at))
         self.db.add(entity)
+        self.db.flush()
+        self.audit.record(
+            "incident.add_timeline_event",
+            "incident",
+            actor,
+            entity_id=entity.id,
+            after_state={"message": message, "occurred_at": occurred_at.isoformat()},
+        )
         self.db.commit()
         self.db.refresh(entity)
         return entity
 
-    def delete(self, incident_id: int) -> None:
+    def delete(self, incident_id: int, actor: User) -> None:
         entity = self.get(incident_id)
+        before_state = snapshot_model(entity)
         self.repository.delete(entity)
+        self.audit.record("incident.delete", "incident", actor, entity_id=incident_id, before_state=before_state)
         self.db.commit()

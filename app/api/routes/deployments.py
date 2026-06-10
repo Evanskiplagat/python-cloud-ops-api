@@ -16,9 +16,9 @@ router = APIRouter()
 def create_deployment(
     payload: DeploymentCreate,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(Role.ADMIN, Role.DEVOPS_ENGINEER, Role.DEVELOPER)),
+    current_user: User = Depends(require_roles(Role.ADMIN, Role.DEVOPS_ENGINEER, Role.DEVELOPER)),
 ) -> DeploymentResponse:
-    return DeploymentResponse.model_validate(DeploymentService(db).create(payload))
+    return DeploymentResponse.model_validate(DeploymentService(db).create(payload, current_user))
 
 
 @router.get("", response_model=PaginatedResponse[DeploymentResponse])
@@ -50,16 +50,16 @@ def update_deployment(
     deployment_id: int,
     payload: DeploymentUpdate,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(Role.ADMIN, Role.DEVOPS_ENGINEER)),
+    current_user: User = Depends(require_roles(Role.ADMIN, Role.DEVOPS_ENGINEER)),
 ) -> DeploymentResponse:
-    return DeploymentResponse.model_validate(DeploymentService(db).update(deployment_id, payload))
+    return DeploymentResponse.model_validate(DeploymentService(db).update(deployment_id, payload, current_user))
 
 
 @router.delete("/{deployment_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_deployment(
     deployment_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(Role.ADMIN)),
+    current_user: User = Depends(require_roles(Role.ADMIN)),
 ) -> Response:
-    DeploymentService(db).delete(deployment_id)
+    DeploymentService(db).delete(deployment_id, current_user)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

@@ -1,8 +1,9 @@
 from fastapi import APIRouter
 
-from app.api.routes import auth, dashboard, deployments, incidents, servers, uptime
+from app.api.routes import audit, auth, dashboard, deployments, incidents, servers, uptime
 
 api_router = APIRouter()
+api_router.include_router(audit.router, prefix="/audit-logs", tags=["audit"])
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(servers.router, prefix="/servers", tags=["servers"])
 api_router.include_router(deployments.router, prefix="/deployments", tags=["deployments"])

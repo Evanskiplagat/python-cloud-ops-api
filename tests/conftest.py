@@ -15,6 +15,24 @@ from app.main import app
 from app.models import *  # noqa: F403
 from app.models.user import User
 
+
+class FakeRedis:
+    def __init__(self) -> None:
+        self.store: dict[str, str] = {}
+
+    def get(self, key: str) -> str | None:
+        return self.store.get(key)
+
+    def set(self, key: str, value: str, ex: int | None = None) -> None:
+        self.store[key] = value
+
+    def ping(self) -> bool:
+        return True
+
+    def close(self) -> None:
+        return None
+
+
 SQLALCHEMY_DATABASE_URL = "sqlite+pysqlite://"
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
@@ -50,6 +68,7 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
 
     app.dependency_overrides[get_db] = override_get_db
     with TestClient(app) as test_client:
+        test_client.app.state.redis = FakeRedis()
         yield test_client
     app.dependency_overrides.clear()
 

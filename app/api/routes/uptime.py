@@ -16,9 +16,9 @@ router = APIRouter()
 def create_target(
     payload: UptimeTargetCreate,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(Role.ADMIN, Role.DEVOPS_ENGINEER)),
+    current_user: User = Depends(require_roles(Role.ADMIN, Role.DEVOPS_ENGINEER)),
 ) -> UptimeTargetResponse:
-    return UptimeTargetResponse.model_validate(UptimeService(db).create(payload))
+    return UptimeTargetResponse.model_validate(UptimeService(db).create(payload, current_user))
 
 
 @router.get("", response_model=PaginatedResponse[UptimeTargetResponse])
@@ -47,16 +47,16 @@ def update_target(
     target_id: int,
     payload: UptimeTargetUpdate,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(Role.ADMIN, Role.DEVOPS_ENGINEER)),
+    current_user: User = Depends(require_roles(Role.ADMIN, Role.DEVOPS_ENGINEER)),
 ) -> UptimeTargetResponse:
-    return UptimeTargetResponse.model_validate(UptimeService(db).update(target_id, payload))
+    return UptimeTargetResponse.model_validate(UptimeService(db).update(target_id, payload, current_user))
 
 
 @router.delete("/{target_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_target(
     target_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(Role.ADMIN)),
+    current_user: User = Depends(require_roles(Role.ADMIN)),
 ) -> Response:
-    UptimeService(db).delete(target_id)
+    UptimeService(db).delete(target_id, current_user)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

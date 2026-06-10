@@ -24,9 +24,9 @@ class IncidentEventPayload(BaseModel):
 def create_incident(
     payload: IncidentCreate,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(Role.ADMIN, Role.DEVOPS_ENGINEER, Role.DEVELOPER)),
+    current_user: User = Depends(require_roles(Role.ADMIN, Role.DEVOPS_ENGINEER, Role.DEVELOPER)),
 ) -> IncidentResponse:
-    return IncidentResponse.model_validate(IncidentService(db).create(payload))
+    return IncidentResponse.model_validate(IncidentService(db).create(payload, current_user))
 
 
 @router.get("", response_model=PaginatedResponse[IncidentResponse])
@@ -55,9 +55,9 @@ def update_incident(
     incident_id: int,
     payload: IncidentUpdate,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(Role.ADMIN, Role.DEVOPS_ENGINEER)),
+    current_user: User = Depends(require_roles(Role.ADMIN, Role.DEVOPS_ENGINEER)),
 ) -> IncidentResponse:
-    return IncidentResponse.model_validate(IncidentService(db).update(incident_id, payload))
+    return IncidentResponse.model_validate(IncidentService(db).update(incident_id, payload, current_user))
 
 
 @router.post("/{incident_id}/timeline", response_model=IncidentResponse)
@@ -65,16 +65,18 @@ def add_timeline_event(
     incident_id: int,
     payload: IncidentEventPayload,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(Role.ADMIN, Role.DEVOPS_ENGINEER, Role.DEVELOPER)),
+    current_user: User = Depends(require_roles(Role.ADMIN, Role.DEVOPS_ENGINEER, Role.DEVELOPER)),
 ) -> IncidentResponse:
-    return IncidentResponse.model_validate(IncidentService(db).add_event(incident_id, payload.message, payload.occurred_at))
+    return IncidentResponse.model_validate(
+        IncidentService(db).add_event(incident_id, payload.message, payload.occurred_at, current_user)
+    )
 
 
 @router.delete("/{incident_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_incident(
     incident_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(Role.ADMIN)),
+    current_user: User = Depends(require_roles(Role.ADMIN)),
 ) -> Response:
-    IncidentService(db).delete(incident_id)
+    IncidentService(db).delete(incident_id, current_user)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

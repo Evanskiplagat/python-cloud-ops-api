@@ -16,9 +16,9 @@ router = APIRouter()
 def create_server(
     payload: ServerCreate,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(Role.ADMIN, Role.DEVOPS_ENGINEER)),
+    current_user: User = Depends(require_roles(Role.ADMIN, Role.DEVOPS_ENGINEER)),
 ) -> ServerResponse:
-    return ServerResponse.model_validate(ServerService(db).create(payload))
+    return ServerResponse.model_validate(ServerService(db).create(payload, current_user))
 
 
 @router.get("", response_model=PaginatedResponse[ServerResponse])
@@ -48,16 +48,16 @@ def update_server(
     server_id: int,
     payload: ServerUpdate,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(Role.ADMIN, Role.DEVOPS_ENGINEER)),
+    current_user: User = Depends(require_roles(Role.ADMIN, Role.DEVOPS_ENGINEER)),
 ) -> ServerResponse:
-    return ServerResponse.model_validate(ServerService(db).update(server_id, payload))
+    return ServerResponse.model_validate(ServerService(db).update(server_id, payload, current_user))
 
 
 @router.delete("/{server_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_server(
     server_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(Role.ADMIN)),
+    current_user: User = Depends(require_roles(Role.ADMIN)),
 ) -> Response:
-    ServerService(db).delete(server_id)
+    ServerService(db).delete(server_id, current_user)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

@@ -25,6 +25,7 @@ class Settings(BaseSettings):
 
     secret_key: str = "dev-insecure-secret-key"
     access_token_expire_minutes: int = 60
+    refresh_token_expire_minutes: int = 60 * 24 * 7
     algorithm: str = "HS256"
 
     cors_origins: list[str] = Field(default_factory=list)
