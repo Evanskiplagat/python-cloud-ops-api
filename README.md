@@ -1,6 +1,6 @@
 # CloudOps Center
 
-CloudOps Center is a production-shaped cloud operations platform built with FastAPI, PostgreSQL, SQLAlchemy, Alembic, Redis, Prometheus, Docker, and GitHub Actions. It centralizes server inventory, deployment history, incident management, uptime monitoring, and operational dashboarding for engineering teams.
+CloudOps Center is a backend service for recording server inventory, deployment history, incidents, and uptime checks. It is built with FastAPI, PostgreSQL, SQLAlchemy, Alembic, Redis, Prometheus, Docker, and GitHub Actions.
 
 ## Features
 
@@ -9,7 +9,7 @@ CloudOps Center is a production-shaped cloud operations platform built with Fast
 - Deployment tracking with history and status filtering
 - Incident management with severity, status, resolution state, and timeline events
 - Uptime target registration with checks and downtime event history
-- Dashboard summary for servers, active deployments, incidents, uptime percentage, and environment overview
+- Dashboard summary for servers, deployments, incidents, uptime, and environments
 - Prometheus metrics and health endpoints
 - Pagination, filtering, structured logging, and centralized exception handling
 
